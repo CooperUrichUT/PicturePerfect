@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home"
+    android:background="@color/purple_200">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="edu.utap.pictureperfect.ui.home.HomeFragment"
+        android:label="@string/title_home"
+        tools:layout="@layout/fragment_home" />
+
+    <fragment
+        android:id="@+id/navigation_dashboard"
+        android:name="edu.utap.pictureperfect.ui.dashboard.DashboardFragment"
+        android:label="@string/title_dashboard"
+        tools:layout="@layout/fragment_dashboard" />
+
+    <fragment
+        android:id="@+id/navigation_notifications"
+        android:name="edu.utap.pictureperfect.ui.notifications.NotificationsFragment"
+        android:label="@string/title_notifications"
+        tools:layout="@layout/fragment_notifications" />
+    <fragment
+        android:id="@+id/navigation_search"
+        android:name="edu.utap.pictureperfect.ui.search.SearchFragment"
+        android:label="@string/title_search"
+        tools:layout="@layout/fragment_search" />
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="edu.utap.pictureperfect.ui.profile.ProfileFragment"
+        android:label="@string/title_profile"
+        tools:layout="@layout/fragment_profile"
+        >
+        <action
+            android:id="@+id/action_navigation_profile_to_profile_settings_fragment"
+            app:destination="@id/profileSettingsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileSettingsFragment"
+        android:name="edu.utap.pictureperfect.ui.profile.ProfileSettingsFragment"
+        android:label="@string/title_profile_settings"
+        tools:layout="@layout/fragment_profile_settings" />
+</navigation>

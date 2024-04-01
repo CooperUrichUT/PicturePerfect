@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.profile.ProfileFragment">
+
+    <!-- Profile Picture -->
+    <ImageView
+        android:id="@+id/image_profile"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:src="@drawable/profile"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="16dp"/>
+
+    <!-- Username -->
+    <TextView
+        android:id="@+id/text_username"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="Username"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/image_profile"
+        app:layout_constraintTop_toBottomOf="@+id/image_profile" />
+
+    <!-- Bio -->
+    <TextView
+        android:id="@+id/text_bio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="User's bio goes here..."
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="@+id/text_username"
+        app:layout_constraintTop_toBottomOf="@+id/text_username"
+        android:layout_marginTop="8dp"/>
+
+    <!-- Edit Profile Button -->
+    <Button
+        android:id="@+id/btn_edit_profile"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit Profile"
+        android:background="@color/purple"
+        app:layout_constraintStart_toStartOf="@+id/text_bio"
+        app:layout_constraintTop_toBottomOf="@+id/text_bio"
+        android:layout_marginTop="16dp"/>
+
+    <!-- Logout Button -->
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Logout"
+        android:background="@color/red"
+        app:layout_constraintStart_toEndOf="@+id/btn_edit_profile"
+        app:layout_constraintTop_toTopOf="@+id/btn_edit_profile"
+        android:layout_marginStart="8dp"/>
+
+    <!-- Posts Count -->
+    <TextView
+        android:id="@+id/text_posts_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Posts: 0"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="@+id/text_bio"
+        app:layout_constraintTop_toBottomOf="@+id/btn_edit_profile" />
+
+    <!-- Followers Count -->
+    <TextView
+        android:id="@+id/text_followers_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Followers: 0"
+        android:textSize="16sp"
+        app:layout_constraintTop_toTopOf="@id/text_posts_count"
+        app:layout_constraintStart_toEndOf="@id/text_posts_count"
+        android:layout_marginStart="16dp"/>
+
+    <!-- Following Count -->
+    <TextView
+        android:id="@+id/text_following_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Following: 0"
+        android:textSize="16sp"
+        app:layout_constraintTop_toTopOf="@id/text_posts_count"
+        app:layout_constraintStart_toEndOf="@id/text_followers_count"
+        android:layout_marginStart="16dp"/>
+
+    <!-- GridView for Posts -->
+    <GridView
+        android:id="@+id/gridViewPosts"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:horizontalSpacing="8dp"
+        android:numColumns="3"
+        android:padding="8dp"
+        android:verticalSpacing="8dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/text_following_count"
+        app:layout_constraintVertical_bias="0.0" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

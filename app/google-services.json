@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "991381931593",
+    "project_id": "pictureperfect-446af",
+    "storage_bucket": "pictureperfect-446af.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:991381931593:android:85fbd1b2f0b7165ddae198",
+        "android_client_info": {
+          "package_name": "edu.utap.pictureperfect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNtkeeW6Q3VohORPNx1rTw8mghZvGZtiY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
