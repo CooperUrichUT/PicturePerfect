@@ -24,6 +24,7 @@ class DashboardFragment : Fragment() {
     private lateinit var mViewPager: ViewPager
     private var galleryFragment = GalleryFragment()
     private var photoFragment = PhotoFragment()
+    private lateinit var openCamera: Button
 
 
     // This property is only valid between onCreateView and onDestroyView.
@@ -37,7 +38,21 @@ class DashboardFragment : Fragment() {
     ): View {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
-//        setupViewPager()
+        openCamera = binding.btnLaunchCamera
+
+        openCamera.setOnClickListener() {
+            Log.d(TAG, "Open Camera button pressed")
+            // Create an intent to open the camera application
+            val cameraIntent = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
+            // Check if there is a camera app available to handle the intent
+            if (cameraIntent.resolveActivity(requireActivity().packageManager) != null) {
+                // Start the camera activity
+                startActivity(cameraIntent)
+            } else {
+                // If no camera app is available, display a toast or handle the situation accordingly
+                Log.e(TAG, "No camera app found")
+            }
+        }
 
 
         return root
@@ -54,41 +69,6 @@ class DashboardFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
-
-
-//    private fun setupViewPager() {
-//        tabLayout = binding.tabsBottom
-//
-//        // Add your desired tab names
-//        tabLayout.addTab(tabLayout.newTab().setText("Gallery"))
-//        tabLayout.addTab(tabLayout.newTab().setText("Photo"))
-//
-//        // Set a listener for tab selection
-//        tabLayout.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
-//            override fun onTabSelected(tab: TabLayout.Tab?) {
-//                // When a tab is selected, replace the fragment
-//                when (tab?.position) {
-//                    0 -> replaceFragment(galleryFragment)
-//                    1 -> replaceFragment(photoFragment)
-//                }
-//            }
-//
-//            override fun onTabUnselected(tab: TabLayout.Tab?) {}
-//            override fun onTabReselected(tab: TabLayout.Tab?) {}
-//        })
-//
-//        // Select the first tab by default
-//        tabLayout.getTabAt(0)?.select()
-//    }
-//
-//    // Function to replace fragment in viewpager_container
-//
-//    private fun replaceFragment(fragment: Fragment) {
-//        val transaction = childFragmentManager.beginTransaction()
-//        transaction.replace(R.id.fragment_container, fragment)
-//        transaction.commit()
-//    }
-
 
 }
 
