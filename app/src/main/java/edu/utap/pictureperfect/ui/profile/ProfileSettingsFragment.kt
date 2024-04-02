@@ -62,6 +62,7 @@ class ProfileSettingsFragment : Fragment() {
         // Set profile image using Universal Image Loader
         setProfileImage()
 
+
         // Set click listener for the "Save" button
         binding.btnSave.setOnClickListener {
             // Navigate back to the profile screen

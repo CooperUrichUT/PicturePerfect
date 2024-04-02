@@ -10,26 +10,26 @@
         android:layout_height="wrap_content"
         android:padding="16dp">
 
-        <!-- Gallery ImageView -->
-        <ImageView
-            android:id="@+id/galleryImageView"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:layout_centerHorizontal="true"
-            android:scaleType="centerCrop"/>
-
         <!-- Button to Open Camera -->
         <Button
             android:id="@+id/btnLaunchCamera"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/galleryImageView"
-            android:layout_marginTop="16dp"
             android:textSize="18sp"
             android:text="OPEN CAMERA"
+            android:layout_marginTop="16dp"
             android:background="@drawable/white_rounded_button"
-            android:textColor="@android:color/white"
+            android:textColor="@android:color/black"
             android:gravity="center"/>
+
+        <!-- Gallery ImageView -->
+        <ImageView
+            android:id="@+id/galleryImageView"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_below="@id/btnLaunchCamera"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"/>
 
     </RelativeLayout>
 
@@ -39,11 +39,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/headerLayout"
-        android:numColumns="5"
-        android:verticalSpacing="1dp"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
         android:horizontalSpacing="1dp"
+        android:numColumns="5"
         android:padding="8dp"
         android:stretchMode="columnWidth"
-        android:gravity="center"/>
+        android:verticalSpacing="1dp" />
 
 </RelativeLayout>

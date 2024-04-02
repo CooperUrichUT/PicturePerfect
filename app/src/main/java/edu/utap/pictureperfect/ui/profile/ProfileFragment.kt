@@ -84,7 +84,7 @@ class ProfileFragment : Fragment() {
                 Log.e(TAG, "Failed to retrieve user data")
             }
         }
-        firebaseMethods.getUserSettingsData(auth.currentUser?.uid.toString()) { retrievedUserSettings ->
+        firebaseMethods.getUserAccountSettingsData(auth.currentUser?.uid.toString()) { retrievedUserSettings ->
             if (retrievedUserSettings != null) {
                 // Handle the retrieved user data here
                 userSettings = retrievedUserSettings
