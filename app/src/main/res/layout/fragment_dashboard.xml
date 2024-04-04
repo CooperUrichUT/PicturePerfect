@@ -14,19 +14,34 @@
         <ImageView
             android:id="@+id/galleryImageView"
             android:layout_width="match_parent"
-            android:layout_height="200dp"
+            android:layout_height="300dp"
             android:layout_centerHorizontal="true"
             android:scaleType="centerCrop"/>
 
         <!-- Button to Open Camera -->
         <Button
             android:id="@+id/btnLaunchCamera"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/galleryImageView"
             android:layout_marginTop="16dp"
             android:textSize="18sp"
             android:text="OPEN CAMERA"
+            android:background="@drawable/white_rounded_button"
+            android:textColor="@android:color/white"
+            android:gravity="center"/>
+
+        <!-- Button to Post Photo -->
+        <Button
+            android:id="@+id/btnPostPhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/galleryImageView"
+            android:layout_toEndOf="@id/btnLaunchCamera"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:textSize="18sp"
+            android:text="Post Photo"
             android:background="@drawable/white_rounded_button"
             android:textColor="@android:color/white"
             android:gravity="center"/>
@@ -39,7 +54,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/headerLayout"
-        android:numColumns="5"
+        android:numColumns="3"
         android:verticalSpacing="1dp"
         android:horizontalSpacing="1dp"
         android:padding="8dp"

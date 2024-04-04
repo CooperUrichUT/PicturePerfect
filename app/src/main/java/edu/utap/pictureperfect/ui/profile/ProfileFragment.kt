@@ -1,5 +1,6 @@
 package edu.utap.pictureperfect.ui.profile
 
+import GridImageAdapter
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
@@ -26,7 +27,6 @@ import edu.utap.pictureperfect.databinding.FragmentProfileBinding
 import edu.utap.pictureperfect.ui.Models.User
 import edu.utap.pictureperfect.ui.Models.UserAccountSettings
 import edu.utap.pictureperfect.ui.Utils.FirebaseMethods
-import edu.utap.pictureperfect.ui.Utils.GridImageAdapter
 import edu.utap.pictureperfect.ui.Utils.UniversalImageLoader
 import edu.utap.pictureperfect.ui.login.LoginActivity
 

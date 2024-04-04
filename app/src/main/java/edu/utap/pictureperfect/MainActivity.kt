@@ -8,6 +8,7 @@ import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
 import edu.utap.pictureperfect.databinding.ActivityMainBinding
+import edu.utap.pictureperfect.ui.dashboard.DashboardFragment
 import edu.utap.pictureperfect.ui.login.LoginActivity
 
 
@@ -18,6 +19,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val intent = intent
+        // Check if the intent contains the PROFILE_PICTURE_URL extra
+        if (intent.hasExtra("PROFILE_PICTURE_URL")) {
+            // Retrieve the PROFILE_PICTURE_URL extra
+            val profilePictureUrl = intent.getStringExtra("PROFILE_PICTURE_URL") ?: ""
+            // Navigate to the DashboardFragment and pass the profile picture URL
+            val dashboardFragment = DashboardFragment()
+            val bundle = Bundle()
+            bundle.putString("PROFILE_PICTURE_URL", profilePictureUrl)
+            dashboardFragment.arguments = bundle
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.nav_host_fragment_activity_main, dashboardFragment)
+                .commit()
+        }
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

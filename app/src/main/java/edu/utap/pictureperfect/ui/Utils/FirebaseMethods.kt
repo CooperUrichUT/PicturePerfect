@@ -1,16 +1,26 @@
 package edu.utap.pictureperfect.ui.Utils
 
+import android.graphics.Bitmap
 import android.util.Log
-import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
+import edu.utap.pictureperfect.ui.Models.Photo
 import edu.utap.pictureperfect.ui.Models.User
 import edu.utap.pictureperfect.ui.Models.UserAccountSettings
+import java.io.ByteArrayOutputStream
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 class FirebaseMethods {
     private val TAG = "FirebaseMethods"
     private var auth: FirebaseAuth = FirebaseAuth.getInstance()
     private var databaseReference: DatabaseReference = FirebaseDatabase.getInstance().reference
+    private var storageReference: StorageReference = FirebaseStorage.getInstance().getReference()
+    private var FIREBASE_STORAGE_LOCATION = "photos/users/"
 
     fun checkIfUsernameExists(username: String, onComplete: (Boolean) -> Unit) {
         val query = databaseReference.child("users").orderByChild("username").equalTo(username)
@@ -109,4 +119,187 @@ class FirebaseMethods {
             }
         }
     }
+
+    fun getImageCount(onComplete: (Long?) -> Unit) {
+        val userId = auth.currentUser?.uid.toString()
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = UserAccountSettings()
+                userAccountSettings.posts = dataSnapshot.child("posts").getValue(Long::class.java) ?: 0
+                onComplete(userAccountSettings.posts)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+                onComplete(null)
+            }
+        })
+    }
+
+    fun uploadNewPhoto(photoType: String, caption: String, bitmap: Bitmap) {
+        Log.d(TAG, "Attempting to upload photo")
+        val uid = auth.currentUser?.uid ?: ""
+        getImageCount { count ->
+            count?.let { imageCount ->
+
+                if (photoType == "NewPhoto") {
+                    val newStorageReference = storageReference.child("$FIREBASE_STORAGE_LOCATION/$uid/photo$imageCount")
+                    Log.d(TAG, "Attempting to upload New Photo")
+                    // Upload the new photo logic here
+                    // For example, you can convert the Bitmap to a byte array and upload it
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+                    val data = baos.toByteArray()
+
+                    // Upload data to Firebase Storage
+                    newStorageReference.putBytes(data)
+                        .addOnSuccessListener { taskSnapshot ->
+                            // Handle successful upload
+                            taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+                                // Get the download URL of the uploaded image
+
+
+                                val downloadUrl = uri.toString()
+                                Log.d(TAG, "DownloadURL: $downloadUrl")
+
+                                addPhotoToDatabase(caption, downloadUrl)
+                                incrementPhotoCountForUserId(uid)
+                                // Now you have the download URL, you can store it in Firebase Database
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            // Handle failed upload
+                            Log.e(TAG, "Upload failed: $exception")
+                        }
+                } else if (photoType == "ProfilePicture") {
+                    Log.d(TAG, "Attempting to upload New Profile Photo")
+                    FIREBASE_STORAGE_LOCATION = "profile_pictures/users/"
+                    val newStorageReference = storageReference.child("$FIREBASE_STORAGE_LOCATION/$uid/profile_photo")
+
+                    val baos = ByteArrayOutputStream()
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+                    val data = baos.toByteArray()
+
+                    // Upload data to Firebase Storage
+                    newStorageReference.putBytes(data)
+                        .addOnSuccessListener { taskSnapshot ->
+                            // Handle successful upload
+                            taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
+                                // Get the download URL of the uploaded image
+
+
+                                val downloadUrl = uri.toString()
+                                Log.d(TAG, "DownloadURL: $downloadUrl")
+
+                                addProfilePictureToDatabase(downloadUrl)
+                                // Now you have the download URL, you can store it in Firebase Database
+                            }
+                        }
+                        .addOnFailureListener { exception ->
+                            // Handle failed upload
+                            Log.e(TAG, "Upload failed: $exception")
+                        }
+
+                        // Upload the new profile photo logic here
+                    } else {
+                        Log.d(TAG, "Function not found")
+                    }
+                } ?: run {
+                    Log.e(TAG, "Failed to retrieve image count")
+                    // Handle error scenario
+                }
+        }
+    }
+
+    fun incrementPhotoCountForUserId(uid: String) {
+        val userId = auth.currentUser?.uid.toString()
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = dataSnapshot.getValue(UserAccountSettings::class.java)
+                userAccountSettings?.let {
+                    val currentPosts = userAccountSettings.posts ?: 0
+                    val newPosts = currentPosts + 1
+                    userAccountSettings.posts = newPosts
+                    // Update the posts count in Firebase
+                    userAccountSettingsRef.child("posts").setValue(newPosts)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "User's posts count incremented successfully")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "Failed to increment user's posts count: $exception")
+                        }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+            }
+        })
+    }
+
+
+    fun addPhotoToDatabase(caption: String, downloadUrl: String) {
+        val uid = auth.currentUser?.uid ?: ""
+        val newPhotoKey = databaseReference.child("photos").push().key.toString() // Push a new child node under "photos"
+        val photoData = Photo() // Create PhotoData object with caption and download URL
+        photoData.image_path = downloadUrl
+        photoData.caption = caption
+        photoData.user_id = uid
+        photoData.date_created = getTimeStamp() // do this
+        photoData.tags = getTags(caption)
+        photoData.photo_id = newPhotoKey
+        databaseReference.child("user_photos").child(uid).child(newPhotoKey).setValue(photoData)
+        databaseReference.child("photos").child(newPhotoKey).setValue(photoData)
+    }
+
+    fun addProfilePictureToDatabase(downloadUrl: String) {
+        val uid = auth.currentUser?.uid ?: ""
+        val newPhotoKey = databaseReference.child("profile_pictures").push().key.toString() // Push a new child node under "photos"
+        val photoData = Photo() // Create PhotoData object with caption and download URL
+        photoData.image_path = downloadUrl
+        photoData.caption = ""
+        photoData.user_id = uid
+        photoData.date_created = getTimeStamp() // do this
+        photoData.tags = ""
+        photoData.photo_id = newPhotoKey
+//        databaseReference.child("user_photos").child(uid).child(newPhotoKey).setValue(photoData)
+        databaseReference.child("profile_pictures").child(newPhotoKey).setValue(photoData)
+    }
+
+    fun getTimeStamp(): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("US/Central")
+        return sdf.format(Date())
+
+    }
+
+    fun getTags(string: String): String {
+        if (string.indexOf("#") > 0) {
+            val sb = StringBuilder()
+            val charArray = string.toCharArray()
+            var foundWord = false
+            for (c in charArray) {
+                if (c == '#') {
+                    foundWord = true
+                    sb.append(c)
+                } else {
+                    if (foundWord) {
+                        sb.append(c)
+                    }
+                }
+                if (c == ' ') {
+                    foundWord = false
+                }
+            }
+            val s = sb.toString().replace(" ", "").replace("#", ",#")
+            return s.substring(1, s.length)
+        }
+        return string
+    }
+
+
+
+
 }

@@ -1,6 +1,7 @@
 // ProfileSettingsFragment.kt
 package edu.utap.pictureperfect.ui.profile
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -18,9 +19,12 @@ import com.google.firebase.auth.auth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.nostra13.universalimageloader.core.ImageLoader
+import edu.utap.pictureperfect.databinding.ActivityDashboardProfileBinding
 import edu.utap.pictureperfect.databinding.FragmentProfileSettingsBinding
 import edu.utap.pictureperfect.ui.Utils.FirebaseMethods
 import edu.utap.pictureperfect.ui.Utils.UniversalImageLoader
+import edu.utap.pictureperfect.ui.dashboard.DashboardFragment
+import edu.utap.pictureperfect.ui.dashboard.NextActivity
 
 class ProfileSettingsFragment : Fragment() {
 
@@ -61,7 +65,12 @@ class ProfileSettingsFragment : Fragment() {
 
         // Set profile image using Universal Image Loader
         setProfileImage()
-
+        binding.textChangePhoto.setOnClickListener {
+            val intent = Intent(requireContext(), DashboardProfileActivity::class.java)
+            var profilePictureUrl = ""
+            intent.putExtra("PROFILE_PICTURE_URL", profilePictureUrl) // Replace with your profile picture URL
+            startActivity(intent)
+        }
 
         // Set click listener for the "Save" button
         binding.btnSave.setOnClickListener {
