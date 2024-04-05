@@ -9,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.GridView
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -19,8 +20,11 @@ import androidx.navigation.NavOptions
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.nostra13.universalimageloader.core.ImageLoader
 import edu.utap.pictureperfect.R
 import edu.utap.pictureperfect.databinding.FragmentProfileBinding
@@ -28,6 +32,7 @@ import edu.utap.pictureperfect.ui.Models.User
 import edu.utap.pictureperfect.ui.Models.UserAccountSettings
 import edu.utap.pictureperfect.ui.Utils.FirebaseMethods
 import edu.utap.pictureperfect.ui.Utils.UniversalImageLoader
+import edu.utap.pictureperfect.ui.Utils.ViewPost
 import edu.utap.pictureperfect.ui.login.LoginActivity
 
 class ProfileFragment : Fragment() {
@@ -41,6 +46,8 @@ class ProfileFragment : Fragment() {
     private lateinit var postCount: TextView
     private lateinit var followCount: TextView
     private lateinit var followerCount: TextView
+    private lateinit var gridView: GridView
+    private lateinit var imgURLs: ArrayList<String>
     private var firebaseMethods: FirebaseMethods = FirebaseMethods()
     private val profileViewModel: ProfileViewModel by viewModels()// Initialize profileViewModel
     private var databaseReference: DatabaseReference = FirebaseDatabase.getInstance().reference
@@ -70,6 +77,7 @@ class ProfileFragment : Fragment() {
         postCount = binding.textPostsCount
         followCount = binding.textFollowingCount
         followerCount = binding.textFollowersCount
+        gridView = binding.gridViewPosts
 
         auth = Firebase.auth
         firebaseMethods.getUserData(auth.currentUser?.uid.toString()) { retrievedUser ->
@@ -116,6 +124,28 @@ class ProfileFragment : Fragment() {
             navigateToLogin()
         }
 
+        // Inside your onViewCreated() method after setting up the GridView adapter
+
+        gridView.setOnItemClickListener { parent, view, position, id ->
+            // Get the imageURL of the clicked item based on its position in the list
+            val clickedImageURL = imgURLs[position]
+
+            // Get the UID of the current user
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+
+            // Create an intent to launch the ViewPost activity
+            val intent = Intent(requireContext(), ViewPost::class.java)
+
+            // Put the clicked image URL and the user ID into the intent as extras
+            intent.putExtra("IMAGE_URL", clickedImageURL)
+            intent.putExtra("USER_ID", userId)
+
+            // Start the ViewPost activity with the intent
+            startActivity(intent)
+        }
+
+
+
         return root
     }
 
@@ -126,7 +156,9 @@ class ProfileFragment : Fragment() {
         imageLoader = UniversalImageLoader(requireContext())
         ImageLoader.getInstance().init(imageLoader.getConfig())
         setProfileImage()
-        tempImageGridSetUp()
+        fetchUserPhotos()
+
+
     }
 
     override fun onDestroyView() {
@@ -134,25 +166,74 @@ class ProfileFragment : Fragment() {
         _binding = null
     }
 
-    fun setProfileImage() {
-        // This will be the firebase URL
-        val imageURL = "https://www.android.com/static/2016/img/share/andy-lg.png"
-        imageLoader.setImage(imageURL, binding.imageProfile, null, "")
-    }
-    private fun tempImageGridSetUp() {
-        // these will be filled with the images for the uid
-        val imgURLs: ArrayList<String> = ArrayList()
-        // Add 7 placeholder image URLs (replace with desired placeholders)
-        imgURLs.add("https://picsum.photos/200/300")
-        imgURLs.add("https://picsum.photos/200/300")
-        imgURLs.add("https://picsum.photos/200/300")
-        imgURLs.add("https://picsum.photos/200/300")
+    private fun setProfileImage() {
+        Log.d(TAG, "Setting the profile image")
 
-        setupImageGrid(imgURLs)
+        // Assuming you have a reference to your Firebase Database and the user's ID
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val userRef =
+            userId?.let {
+                FirebaseDatabase.getInstance().reference.child("profile_pictures").child(
+                    it
+                ).child("image_path")
+            }
+
+        // Listen for changes to the profile picture URL in the database
+        userRef?.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val imageURL = dataSnapshot.getValue(String::class.java)
+                imageURL?.let {
+                    // Set the retrieved imageURL in the shared ViewModel
+                    imageLoader.setImage(imageURL, binding.imageProfile, null, "")
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error fetching profile picture URL: ${databaseError.message}")
+            }
+        })
     }
-    private fun setupImageGrid(imgURLs: ArrayList<String>) {
+
+    private fun fetchUserPhotos() {
+        Log.d(TAG, "Fetching user photos")
+
+        // Assuming you have a reference to your Firebase Database and the user's ID
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val userPhotosRef = userId?.let {
+            FirebaseDatabase.getInstance().reference.child("user_photos").child(it)
+        }
+
+        // Listen for changes to the user's photos in the database
+        userPhotosRef?.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val photoList = ArrayList<String>()
+
+                // Iterate through each child node under the user's photos node
+                for (snapshot in dataSnapshot.children) {
+                    // Get the imageURL of the photo and add it to the list
+                    val imageURL = snapshot.child("image_path").getValue(String::class.java)
+                    imageURL?.let {
+                        photoList.add(it)
+                    }
+                }
+
+                // Once all photos are retrieved, you can use photoList as needed
+                // For example, you can display them in a grid or a list
+                // Here you could pass photoList to your adapter or display logic
+                // for populating the UI with user photos
+                photoList.reverse()
+                setupImageGrid(photoList)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error fetching user photos: ${databaseError.message}")
+            }
+        })
+    }
+    private fun setupImageGrid(images: ArrayList<String>) {
+        imgURLs = images
         val gridView = binding.gridViewPosts
-        val adapter = GridImageAdapter(requireContext(), R.layout.layout_grid_image_view, "", imgURLs)
+        val adapter = GridImageAdapter(requireContext(), R.layout.layout_grid_image_view, "", images)
         gridView.adapter = adapter
     }
 

@@ -22,8 +22,11 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.viewpager.widget.ViewPager
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.nostra13.universalimageloader.core.ImageLoader
 import edu.utap.pictureperfect.R
 import edu.utap.pictureperfect.databinding.ActivityDashboardProfileBinding
@@ -117,13 +120,6 @@ class DashboardProfileActivity : AppCompatActivity() {
         }
     }
 
-    // Function to take a picture
-    private fun takePicture() {
-        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-        // Start the activity with camera_intent, and request pic id
-        startActivityForResult(cameraIntent, 123)
-    }
-
     private fun tempImageGridSetUp() {
         val imgURLs: ArrayList<String> = ArrayList()
         // Add 7 placeholder image URLs (replace with desired placeholders)
@@ -146,6 +142,15 @@ class DashboardProfileActivity : AppCompatActivity() {
 
 
         setupImageGrid(imgURLs)
+    }
+
+
+
+    // Function to take a picture
+    private fun takePicture() {
+        val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        // Start the activity with camera_intent, and request pic id
+        startActivityForResult(cameraIntent, 123)
     }
     private fun setupImageGrid(imgURLs: ArrayList<String>) {
         val gridView = gridView

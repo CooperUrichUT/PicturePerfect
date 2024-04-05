@@ -265,7 +265,7 @@ class FirebaseMethods {
         photoData.tags = ""
         photoData.photo_id = newPhotoKey
 //        databaseReference.child("user_photos").child(uid).child(newPhotoKey).setValue(photoData)
-        databaseReference.child("profile_pictures").child(newPhotoKey).setValue(photoData)
+        databaseReference.child("profile_pictures").child(uid).setValue(photoData)
     }
 
     fun getTimeStamp(): String {
@@ -297,6 +297,12 @@ class FirebaseMethods {
             return s.substring(1, s.length)
         }
         return string
+    }
+
+    fun getUsername(userId: String): String {
+
+        val userRef = databaseReference.child("users").child(userId).child("username").toString()
+        return userRef
     }
 
 

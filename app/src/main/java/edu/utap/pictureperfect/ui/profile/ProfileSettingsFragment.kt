@@ -16,8 +16,11 @@ import androidx.navigation.fragment.findNavController
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 import com.nostra13.universalimageloader.core.ImageLoader
 import edu.utap.pictureperfect.databinding.ActivityDashboardProfileBinding
 import edu.utap.pictureperfect.databinding.FragmentProfileSettingsBinding
@@ -90,9 +93,26 @@ class ProfileSettingsFragment : Fragment() {
 
     private fun setProfileImage() {
         Log.d(TAG, "Setting the profile image")
-        val imageURL = "https://www.android.com/static/2016/img/share/andy-lg.png"
-        // Set the imageURL in the shared ViewModel
-        imageLoader.setImage(imageURL, binding.imageProfile, null, "")
+
+        // Assuming you have a reference to your Firebase Database and the user's ID
+        val userId = FirebaseAuth.getInstance().currentUser?.uid
+        val userRef = userId?.let { FirebaseDatabase.getInstance().reference.child("profile_pictures").child(it) }
+
+        // Listen for changes to the profile picture URL in the database
+        userRef?.child("profilePictureUrl")?.addListenerForSingleValueEvent(object :
+            ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val imageURL = dataSnapshot.getValue(String::class.java)
+                imageURL?.let {
+                    // Set the retrieved imageURL in the shared ViewModel
+                    imageLoader.setImage(imageURL, binding.imageProfile, null, "")
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error fetching profile picture URL: ${databaseError.message}")
+            }
+        })
     }
 
 
