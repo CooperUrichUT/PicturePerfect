@@ -40,6 +40,9 @@
         <activity android:name=".ui.profile.DashboardProfileActivity">
             <!-- Add any additional attributes as needed -->
         </activity>
+        <activity android:name=".ui.profile.ProfileNextActivity">
+            <!-- Add any additional attributes as needed -->
+        </activity>
     </application>
 
 </manifest>

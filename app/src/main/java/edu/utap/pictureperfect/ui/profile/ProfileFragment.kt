@@ -135,10 +135,12 @@ class ProfileFragment : Fragment() {
     }
 
     fun setProfileImage() {
+        // This will be the firebase URL
         val imageURL = "https://www.android.com/static/2016/img/share/andy-lg.png"
         imageLoader.setImage(imageURL, binding.imageProfile, null, "")
     }
     private fun tempImageGridSetUp() {
+        // these will be filled with the images for the uid
         val imgURLs: ArrayList<String> = ArrayList()
         // Add 7 placeholder image URLs (replace with desired placeholders)
         imgURLs.add("https://picsum.photos/200/300")

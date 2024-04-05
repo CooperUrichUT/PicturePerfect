@@ -42,18 +42,6 @@ class NextActivity: AppCompatActivity() {
         val btnPost = findViewById<Button>(R.id.btnPost)
         val btnCancel = findViewById<Button>(R.id.btnCancel)
 
-//        if (intent.getStringExtra("PROFILE_PICTURE_URL") != "") {
-//            val caption = findViewById<EditText>(R.id.caption)
-//            btnPost.text = "Update"
-//            caption.hint = "Profile Picture doesnt need caption"
-//            caption.isActivated = false
-//
-//        } else {
-//            val caption = findViewById<EditText>(R.id.caption)
-//            btnPost.text = "Post"
-//            caption.hint = "Give this photo a caption!"
-//            caption.isActivated = true
-//        }
 
         imageURL?.let {
             // Download image from URL and convert to Bitmap using AsyncTask
@@ -82,11 +70,6 @@ class NextActivity: AppCompatActivity() {
             val bitmap = (imageShare.drawable as? BitmapDrawable)?.bitmap // Get the bitmap from ImageView
             val caption = findViewById<EditText>(R.id.caption).text.toString()
             if (bitmap != null) {
-
-                if (intent.getStringExtra("PROFILE_PICTURE_URL") != "") {
-                    firebaseMethods.uploadNewPhoto("ProfilePicture", caption, bitmap)
-                }
-
                 firebaseMethods.uploadNewPhoto("NewPhoto", caption, bitmap)
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)

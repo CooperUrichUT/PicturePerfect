@@ -66,11 +66,13 @@ class DashboardProfileActivity : AppCompatActivity() {
         btnLaunchCamera = findViewById(R.id.btnLaunchCamera)
         gridView = findViewById(R.id.gridView)
         galleryImageView = findViewById(R.id.galleryImageView)
+        imageLoader = UniversalImageLoader(this)
+        ImageLoader.getInstance().init(imageLoader.getConfig())
         tempImageGridSetUp()
 
         btnUpdateProfilePicture.setOnClickListener {
             if (imageURL != "") {
-                val intent = Intent(this, NextActivity::class.java)
+                val intent = Intent(this, ProfileNextActivity::class.java)
                 // Add the imageURL as an extra to the Intent
                 intent.putExtra("PROFILE_PICTURE_URL", imageURL)
                 // Start NextActivity
@@ -108,7 +110,7 @@ class DashboardProfileActivity : AppCompatActivity() {
             val photo: Bitmap? = data?.extras?.get("data") as? Bitmap
             photo?.let {
                 // Pass the Bitmap to the next activity
-                val intent = Intent(this, NextActivity::class.java)
+                val intent = Intent(this, ProfileNextActivity::class.java)
                 intent.putExtra("IMAGE_BITMAP", photo)
                 startActivity(intent)
             }
