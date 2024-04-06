@@ -37,6 +37,10 @@
         <action
             android:id="@+id/action_navigation_profile_to_profile_settings_fragment"
             app:destination="@id/profileSettingsFragment" />
+
+        <action
+            android:id="@+id/action_navigation_viewPost_to_profile_settings_fragment"
+            app:destination="@id/profileSettingsFragment" />
     </fragment>
 
     <fragment

@@ -46,6 +46,9 @@
         <activity android:name=".ui.Utils.ViewPost">
             <!-- Add any additional attributes as needed -->
         </activity>
+        <activity android:name=".ui.Utils.ViewPostComments">
+            <!-- Add any additional attributes as needed -->
+        </activity>
 
     </application>
 

@@ -135,10 +135,12 @@ class ProfileFragment : Fragment() {
 
             // Create an intent to launch the ViewPost activity
             val intent = Intent(requireContext(), ViewPost::class.java)
+            val location = "Profile"
 
             // Put the clicked image URL and the user ID into the intent as extras
             intent.putExtra("IMAGE_URL", clickedImageURL)
             intent.putExtra("USER_ID", userId)
+            intent.putExtra("LOCATION", location)
 
             // Start the ViewPost activity with the intent
             startActivity(intent)

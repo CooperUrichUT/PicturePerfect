@@ -250,6 +250,9 @@ class FirebaseMethods {
         photoData.date_created = getTimeStamp() // do this
         photoData.tags = getTags(caption)
         photoData.photo_id = newPhotoKey
+        photoData.comments = ArrayList()
+        photoData.likes = 0
+//        photoData.liked_users.add("init")
         databaseReference.child("user_photos").child(uid).child(newPhotoKey).setValue(photoData)
         databaseReference.child("photos").child(newPhotoKey).setValue(photoData)
     }
