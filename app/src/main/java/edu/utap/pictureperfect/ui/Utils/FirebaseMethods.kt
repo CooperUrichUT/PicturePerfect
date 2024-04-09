@@ -6,6 +6,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageReference
+import edu.utap.pictureperfect.ui.Models.Comment
 import edu.utap.pictureperfect.ui.Models.Photo
 import edu.utap.pictureperfect.ui.Models.User
 import edu.utap.pictureperfect.ui.Models.UserAccountSettings
@@ -243,16 +244,20 @@ class FirebaseMethods {
     fun addPhotoToDatabase(caption: String, downloadUrl: String) {
         val uid = auth.currentUser?.uid ?: ""
         val newPhotoKey = databaseReference.child("photos").push().key.toString() // Push a new child node under "photos"
-        val photoData = Photo() // Create PhotoData object with caption and download URL
-        photoData.image_path = downloadUrl
-        photoData.caption = caption
-        photoData.user_id = uid
-        photoData.date_created = getTimeStamp() // do this
-        photoData.tags = getTags(caption)
-        photoData.photo_id = newPhotoKey
-        photoData.comments = ArrayList()
-        photoData.likes = 0
-//        photoData.liked_users.add("init")
+
+        // Create a new Photo object
+        val photoData = Photo().apply {
+            image_path = downloadUrl
+            this.caption = caption
+            user_id = uid
+            date_created = getTimeStamp()
+            tags = getTags(caption)
+            photo_id = newPhotoKey
+            comments = HashMap() // Initialize comments to an empty HashMap
+            likes = 0
+        }
+
+        // Save the photoData object to Firebase
         databaseReference.child("user_photos").child(uid).child(newPhotoKey).setValue(photoData)
         databaseReference.child("photos").child(newPhotoKey).setValue(photoData)
     }
@@ -302,11 +307,224 @@ class FirebaseMethods {
         return string
     }
 
-    fun getUsername(userId: String): String {
+    fun addNotificationToUser( userId: String, photoUserId: String, notifType: String) {
+        if (userId != photoUserId) {
+            val userRef = databaseReference.child("users").child(photoUserId)
+            // Generate a unique notification ID
+            val notificationId = databaseReference.child("notifications").push().key ?: ""
+            getUserAccountSettingsData(userId) { user ->
+                var notificationMessage = ""
+                if (notifType == "comment") {
+                    notificationMessage = "${user?.username} has commented on your picture!"
+                } else if (notifType == "like") {
+                    notificationMessage = "${user?.username} has liked your picture!"
+                } else if (notifType == "unlike") {
+                    notificationMessage = "${user?.username} has removed a like from your picture!"
+                } else if (notifType == "follow") {
+                    notificationMessage = "${user?.username} has followed you!"
+                } else if (notifType == "unfollow") {
+                    notificationMessage = "${user?.username} has unfollowed you :("
+                }
 
-        val userRef = databaseReference.child("users").child(userId).child("username").toString()
-        return userRef
+                val notificationData = HashMap<String, Any>()
+                notificationData["from"] = photoUserId // ID of the user who liked the photo
+                notificationData["type"] =
+                    notifType // Notification type (e.g., like, comment, etc.)
+                notificationData["message"] = notificationMessage // Notification message
+                notificationData["date_created"] = getTimeStamp() // Notification message
+
+                userRef.child("notifications").child(notificationId).setValue(notificationData)
+                    .addOnSuccessListener {
+                        // Notification added successfully
+                        Log.d(TAG, "Notification added successfully")
+                    }
+                    .addOnFailureListener { e ->
+                        // Error adding notification
+                        Log.e(TAG, "Error adding notification: ${e.message}")
+                    }
+            }
+        } else {
+            Log.d(TAG, "User liked/ unliked their own picture")
+        }
     }
+
+    fun getAllUsers(onComplete: (List<User>?) -> Unit) {
+        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+        if (currentUserUid != null) {
+            val userList = mutableListOf<User>()
+            val usersRef = databaseReference.child("users")
+            usersRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for (snapshot in dataSnapshot.children) {
+                        val user = snapshot.getValue(User::class.java)
+                        // Exclude the current user from the list
+                        if (user != null && user.user_id != currentUserUid) {
+                            userList.add(user)
+                        }
+                    }
+                    onComplete(userList)
+                }
+
+                override fun onCancelled(databaseError: DatabaseError) {
+                    Log.e(TAG, "Error retrieving users: ${databaseError.message}")
+                    onComplete(null)
+                }
+            })
+        } else {
+            Log.e(TAG, "Current user UID is null")
+            onComplete(null)
+        }
+    }
+
+
+    fun followersUser(currentUserId: String, followedUser: String) {
+        // Add followed user's ID to current user's followers list
+        databaseReference.child("users").child(followedUser).child("followed_users").child(currentUserId).setValue(true)
+        addNotificationToUser(currentUserId, followedUser, "follow")
+    }
+
+    fun followingUsers(currentUserId: String, followedUser: String) {
+        // Add followed user's ID to current user's following list
+        databaseReference.child("users").child(currentUserId).child("following_users").child(followedUser).setValue(true)
+    }
+
+    fun unfollowUser(currentUserId: String, followedUser: String) {
+        // Remove followed user's ID from current user's followers list
+        databaseReference.child("users").child(followedUser).child("followed_users").child(currentUserId).removeValue()
+        addNotificationToUser(currentUserId, followedUser, "unfollow")
+    }
+
+    fun removeFollowingUser(currentUserId: String, followedUser: String) {
+        // Remove followed user's ID from current user's following list
+        databaseReference.child("users").child(currentUserId).child("following_users").child(followedUser).removeValue()
+    }
+
+    fun increaseFollowing(userId: String) {
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = dataSnapshot.getValue(UserAccountSettings::class.java)
+                userAccountSettings?.let {
+                    val currentFollowing = userAccountSettings.following ?: 0
+                    val newFollowing = currentFollowing + 1
+                    userAccountSettings.following = newFollowing
+                    // Update the posts count in Firebase
+                    userAccountSettingsRef.child("following").setValue(newFollowing)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "User's posts count incremented successfully")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "Failed to increment user's posts count: $exception")
+                        }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+            }
+        })
+    }
+
+    fun increaseFollowers(userId: String) {
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = dataSnapshot.getValue(UserAccountSettings::class.java)
+                userAccountSettings?.let {
+                    val currentFollowing = userAccountSettings.followers ?: 0
+                    val newFollowing = currentFollowing + 1
+                    userAccountSettings.followers = newFollowing
+                    // Update the posts count in Firebase
+                    userAccountSettingsRef.child("followers").setValue(newFollowing)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "User's posts count incremented successfully")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "Failed to increment user's posts count: $exception")
+                        }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+            }
+        })
+
+    }
+
+    fun decreaseFollowing(userId: String) {
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = dataSnapshot.getValue(UserAccountSettings::class.java)
+                userAccountSettings?.let {
+                    val currentFollowing = userAccountSettings.following ?: 0
+                    val newFollowing = currentFollowing - 1
+                    userAccountSettings.following = newFollowing
+                    // Update the posts count in Firebase
+                    userAccountSettingsRef.child("following").setValue(newFollowing)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "User's posts count incremented successfully")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "Failed to increment user's posts count: $exception")
+                        }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+            }
+        })
+    }
+
+    fun decreaseFollowers(userId: String) {
+        val userAccountSettingsRef = databaseReference.child("user_account_settings").child(userId)
+        userAccountSettingsRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                val userAccountSettings = dataSnapshot.getValue(UserAccountSettings::class.java)
+                userAccountSettings?.let {
+                    val currentFollowing = userAccountSettings.followers ?: 0
+                    val newFollowing = currentFollowing - 1
+                    userAccountSettings.followers = newFollowing
+                    // Update the posts count in Firebase
+                    userAccountSettingsRef.child("followers").setValue(newFollowing)
+                        .addOnSuccessListener {
+                            Log.d(TAG, "User's posts count incremented successfully")
+                        }
+                        .addOnFailureListener { exception ->
+                            Log.e(TAG, "Failed to increment user's posts count: $exception")
+                        }
+                }
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error retrieving user account settings: ${databaseError.message}")
+            }
+        })
+
+    }
+
+    fun checkIfFollowing(currentUserId: String, followedUser: String, callback: (Boolean) -> Unit) {
+        val followedUserRef = databaseReference.child("users").child(followedUser).child("followed_users").child(currentUserId)
+
+        followedUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Check if followedUser is in the current user's followedUsers list
+                val isFollowing = dataSnapshot.exists()
+                // Pass the result to the callback function
+                callback(isFollowing)
+            }
+
+            override fun onCancelled(databaseError: DatabaseError) {
+                // Handle error
+                callback(false) // Return false in case of error
+            }
+        })
+    }
+
+
+
 
 
 

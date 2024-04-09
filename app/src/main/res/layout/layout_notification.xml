@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/relLayout1"
+        android:layout_marginTop="15dp"
+        android:background="@drawable/grey_border_bottom">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="60dp"
+            android:layout_marginBottom="20dp">
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="this is a comment"
+                android:layout_marginLeft="15dp"
+                android:textColor="@color/black"
+                android:paddingTop="5dp"
+                android:textSize="18sp"
+                android:id="@+id/notification"/>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="3 d"
+                android:textColor="@color/grey"
+                android:textSize="14sp"
+                android:id="@+id/notification_time_posted"
+                android:layout_marginTop="15dp"
+                android:layout_marginLeft="15dp"
+                android:layout_below="@+id/notification"/>
+
+
+        </RelativeLayout>
+
+
+    </RelativeLayout>
+
+</RelativeLayout>

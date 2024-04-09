@@ -77,40 +77,38 @@ class ViewPost : AppCompatActivity() {
         Log.d(TAG, "ImageURL: $imageUrl and UserID: $userId")
 
         // Query the Firebase Realtime Database to fetch the corresponding Photo object
-        val userPhotosRef = userId?.let {
+        val userPhotosRef = userId.let {
             FirebaseDatabase.getInstance().reference
                 .child("user_photos")
                 .child(it)
         }
 
         // Attach a ValueEventListener to fetch the Photo object
-        if (userPhotosRef != null) {
-            userPhotosRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    // Iterate through each photo under the current user's node
-                    for (photoSnapshot in dataSnapshot.children) {
-                        // Get the photo data (Photo object) from the snapshot
-                        photo = photoSnapshot.getValue(Photo::class.java)!!
+        userPhotosRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                // Iterate through each photo under the current user's node
+                for (photoSnapshot in dataSnapshot.children) {
+                    // Get the photo data (Photo object) from the snapshot
+                    photo = photoSnapshot.getValue(Photo::class.java)!!
 
-                        // If photo is null or its image path doesn't match imageUrl, continue to the next iteration
-                        if (photo == null || photo.image_path != imageUrl) continue
+                    // If photo is null or its image path doesn't match imageUrl, continue to the next iteration
+                    if (photo.image_path != imageUrl) continue
 
-                        // Now you have the Photo object associated with the imageUrl
-                        // You can use this photo object as needed
-                        Log.d(TAG, "Found matching photo: $photo")
-                        Log.d(TAG, "Photo information: ${photo.caption}")
-                        setWidgets()
+                    // Now you have the Photo object associated with the imageUrl
+                    // You can use this photo object as needed
+                    Log.d(TAG, "Found matching photo: $photo")
+                    Log.d(TAG, "Photo information: ${photo.caption}")
+                    setWidgets()
 
-                        // Break out of the loop since we found the matching photo
-                        break
-                    }
+                    // Break out of the loop since we found the matching photo
+                    break
                 }
+            }
 
-                override fun onCancelled(databaseError: DatabaseError) {
-                    Log.e(TAG, "Error fetching user photos: ${databaseError.message}")
-                }
-            })
-        }
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e(TAG, "Error fetching user photos: ${databaseError.message}")
+            }
+        })
 
         cancelButton.setOnClickListener {
 
@@ -143,13 +141,13 @@ class ViewPost : AppCompatActivity() {
                 incrementLikesInDatabase()
                 // Remove the current user from the liked_users list
                 addUserToLikedList()
-                photo.liked_users.remove(auth.currentUser?.uid.toString())
+//                photo.liked_users.remove(auth.currentUser?.uid.toString())
             } else {
                 // If the heart was white, user is liking the photo
                 decrementImageLikes()
                 // Add the current user to the liked_users list
                 removeUserFromLikedList()
-                photo.liked_users.add(auth.currentUser?.uid.toString())
+//                photo.liked_users.add(auth.currentUser?.uid.toString())
             }
         }
 
@@ -161,6 +159,7 @@ class ViewPost : AppCompatActivity() {
             intent.putExtra("IMAGE_URL", imageUrl)
             intent.putExtra("PHOTO_USER_ID", photoUserId)
             intent.putExtra("LOCATION", location)
+            intent.putExtra("PHOTO_ID", photo.photo_id)
 
             // Start the ViewPost activity with the intent
             startActivity(intent)
@@ -174,6 +173,7 @@ class ViewPost : AppCompatActivity() {
             intent.putExtra("IMAGE_URL", imageUrl)
             intent.putExtra("PHOTO_USER_ID", photoUserId)
             intent.putExtra("LOCATION", location)
+            intent.putExtra("PHOTO_ID", photo.photo_id)
 
             // Start the ViewPost activity with the intent
             startActivity(intent)
@@ -303,6 +303,7 @@ class ViewPost : AppCompatActivity() {
                 // Update the likes count in the database
                 photoRef.child(photo.photo_id).child("likes").setValue(newLikes)
                 fetchLikesCountFromDatabase()
+                firebaseMethods.addNotificationToUser(userId, photoUserId, "like")
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -345,6 +346,7 @@ class ViewPost : AppCompatActivity() {
                 // Update the likes count in the database
                 photoRef.child(photo.photo_id).child("likes").setValue(newLikes)
                 fetchLikesCountFromDatabase()
+                firebaseMethods.addNotificationToUser(userId, photoUserId, "unlike")
             }
 
             override fun onCancelled(databaseError: DatabaseError) {
@@ -376,11 +378,12 @@ class ViewPost : AppCompatActivity() {
             // Assuming you have a reference to the photo node in the database
             val userPhotoRef = FirebaseDatabase.getInstance().reference
                 .child("user_photos")
-                .child(photoUserId) // Adjust this path to match your database structure
+                .child(photoUserId)
 
             val photoRef = FirebaseDatabase.getInstance().reference
                 .child("photos")
-                .child(photo.photo_id) // Adjust this path to match your database structure
+
+
 
             // Run transaction to update liked users list for the user node
             userPhotoRef.child(photo.photo_id).child("liked_users").runTransaction(object : Transaction.Handler {
@@ -408,7 +411,49 @@ class ViewPost : AppCompatActivity() {
                     if (committed) {
                         // Liked users list updated successfully for user node
                         // Now update liked users list for photo node
-                        photoRef.child("liked_users").setValue(dataSnapshot?.value)
+                        userPhotoRef.child(photo.photo_id).child("liked_users").setValue(dataSnapshot?.value)
+                            .addOnCompleteListener { task ->
+                                if (task.isSuccessful) {
+                                    // Liked users list updated successfully for photo node
+                                    // Now you can update the likes count in the UI
+                                    fetchLikesCountFromDatabase()
+                                } else {
+                                    Log.e(TAG, "Failed to update liked users list for photo node: ${task.exception?.message}")
+                                }
+                            }
+                    } else {
+                        // Transaction failed for user node
+                        Log.e(TAG, "Transaction failed for user node: ${databaseError?.message}")
+                    }
+                }
+            })
+
+            photoRef.child(photo.photo_id).child("liked_users").runTransaction(object : Transaction.Handler {
+                override fun doTransaction(mutableData: MutableData): Transaction.Result {
+                    // Get the current liked users list
+                    var likedUsersPhotos = mutableData.getValue(ArrayList::class.java) as? ArrayList<String>
+
+                    // Initialize likedUsers as an empty ArrayList if it's null
+                    if (likedUsersPhotos == null) {
+                        likedUsersPhotos = ArrayList()
+                    }
+
+                    // Add the current user's ID to the list if it's not already present
+                    if (!likedUsersPhotos.contains(userId)) {
+                        likedUsersPhotos.add(userId)
+                    }
+
+                    // Set the updated liked users list in the mutableData
+                    mutableData.value = likedUsersPhotos
+
+                    return Transaction.success(mutableData)
+                }
+
+                override fun onComplete(databaseError: DatabaseError?, committed: Boolean, dataSnapshot: DataSnapshot?) {
+                    if (committed) {
+                        // Liked users list updated successfully for user node
+                        // Now update liked users list for photo node
+                        photoRef.child(photo.photo_id).child("liked_users").setValue(dataSnapshot?.value)
                             .addOnCompleteListener { task ->
                                 if (task.isSuccessful) {
                                     // Liked users list updated successfully for photo node

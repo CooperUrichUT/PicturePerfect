@@ -7,6 +7,8 @@ import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.nostra13.universalimageloader.core.ImageLoader
+import com.nostra13.universalimageloader.core.ImageLoaderConfiguration
 import edu.utap.pictureperfect.databinding.ActivityMainBinding
 import edu.utap.pictureperfect.ui.dashboard.DashboardFragment
 import edu.utap.pictureperfect.ui.login.LoginActivity
@@ -19,6 +21,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val config = ImageLoaderConfiguration.Builder(this).build()
+        ImageLoader.getInstance().init(config)
 
         val intent = intent
         // Check if the intent contains the PROFILE_PICTURE_URL extra
